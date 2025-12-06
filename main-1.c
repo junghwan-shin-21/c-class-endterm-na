@@ -31,7 +31,7 @@ int main(void) {
     for (int i = 0; i < 3; i++)
         sum += *(p + i * 3 + i);
 
-    printf("======\n");
+    printf("=========\n");
     printf("대각선 합계: %d\n", sum);
 
     return 0;
