@@ -1,0 +1,124 @@
+name: C 프로그래밍 중간고사 (통합 채점)
+
+on: [push]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v3
+
+      - name: 통합 채점 스크립트 실행 (100점 만점)
+        id: grading
+        run: |
+          # ANSI 색상 코드 정의
+          GREEN='\033[32m'
+          RED='\033[31m'
+          BLUE='\033[34m'
+          NC='\033[0m' # No Color
+
+          # ----------------------------------------------------
+          # 1. 초기 변수 설정
+          # ----------------------------------------------------
+          P1_SCORE=0
+          P2_SCORE=0
+          P1_FEEDBACK=""
+          P2_FEEDBACK=""
+          FINAL_SCORE=0
+
+          # Normalize function: Remove all whitespace (spaces, tabs, newlines, carriage returns) for strict comparison.
+          normalize_output() {
+            tr -d ' \t\n\r' < "$1"
+          }
+
+          # ----------------------------------------------------
+          # 2. 문제 1 채점 (약수 출력 - main-1.c) - 50점
+          # ----------------------------------------------------
+          echo -e "\n${BLUE}--- [TEST P1] 약수 출력 채점 시작 (main-1.c) ---${NC}"
+
+          # 2-1. 컴파일 시도
+          if gcc main-1.c -o main1 2> compile_error_p1.txt; then
+            echo -e "${GREEN}[OK]${NC} 문제 1: 컴파일 성공."
+            
+            # 2-2. 예상 출력 파일 생성 (printf로 변경하여 줄바꿈 오차 제거)
+            printf "24의 약수: 1 2 3 4 6 8 12 24\n" > expected_p1.txt
+            
+            # 2-3. 실행 및 원본 출력 캡처 (입력: 24)
+            echo "24" | ./main1 > actual_p1_raw.txt
+            
+            # 2-4. 출력 정리: 프롬프트 및 불필요한 선행 문자 제거
+            grep '24의 약수:' actual_p1_raw.txt | tail -n 1 | sed 's/^.*24의 약수:/24의 약수:/' > actual_p1.txt
+
+            # 2-5. 출력 비교
+            if [[ "$(normalize_output actual_p1.txt)" == "$(normalize_output expected_p1.txt)" ]]; then
+              P1_SCORE=50
+              P1_FEEDBACK="${GREEN}[OK]${NC} 문제 1 (약수 출력): 통과 (50점)"
+            else
+              P1_FEEDBACK="${RED}[FAIL]${NC} 문제 1 (약수 출력): 실패. (입력: 24)"
+              P1_FEEDBACK="${P1_FEEDBACK}\n  [학생 출력]: $(cat actual_p1.txt | tr '\n' ' ')"
+              P1_FEEDBACK="${P1_FEEDBACK}\n  [예상 출력]: (정규화 전 - 출력 포맷 불일치 가능성)"
+            fi
+          else
+            echo -e "${RED}[FAIL]${NC} 문제 1: 컴파일 실패."
+            P1_FEEDBACK="${RED}[FAIL]${NC} 문제 1 (약수 출력): 컴파일 실패. 코드를 확인하세요."
+          fi
+          
+          # ----------------------------------------------------
+          # 3. 문제 2 채점 (합계 및 역순 출력 - main-2.c) - 50점
+          # ----------------------------------------------------
+          echo -e "\n${BLUE}--- [TEST P2] 합계 및 역순 출력 채점 시작 (main-2.c) ---${NC}"
+
+          # 3-1. 컴파일 시도
+          if gcc main-2.c -o main2 2> compile_error_p2.txt; then
+            echo -e "${GREEN}[OK]${NC} 문제 2: 컴파일 성공."
+
+            # 3-2. 예상 출력 파일 생성 (printf로 변경하여 줄바꿈 오차 제거)
+            printf "합계: 424\n역순: 90 1 27 68 48 23 95 4 56 12\n" > expected_p2.txt
+
+            # 3-3. 실행 및 원본 출력 캡처 (입력: 12 56 ... 90)
+            echo "12 56 4 95 23 48 68 27 1 90" | ./main2 > actual_p2_raw.txt
+
+            # 3-4. 출력 정리: 프롬프트 제거를 위해 정답 키워드를 포함하는 라인만 추출 및 정리
+            grep -E '합계:|역순:' actual_p2_raw.txt | sed 's/^.*합계:/합계:/' | sed 's/^.*역순:/역순:/' > actual_p2.txt
+
+            # 3-5. 출력 비교
+            if [[ "$(normalize_output actual_p2.txt)" == "$(normalize_output expected_p2.txt)" ]]; then
+              P2_SCORE=50
+              P2_FEEDBACK="${GREEN}[OK]${NC} 문제 2 (합계 및 역순): 통과 (50점)"
+            else
+              P2_FEEDBACK="${RED}[FAIL]${NC} 문제 2 (합계 및 역순): 실패. (입력: 12 56 4 95 23 48 68 27 1 90)"
+              P2_FEEDBACK="${P2_FEEDBACK}\n  [학생 출력]: $(cat actual_p2.txt | tr '\n' ' ')"
+              P2_FEEDBACK="${P2_FEEDBACK}\n  [예상 출력]: (정규화 전 - 출력 포맷 불일치 가능성)"
+            fi
+          else
+            echo -e "${RED}[FAIL]${NC} 문제 2: 컴파일 실패."
+            P2_FEEDBACK="${RED}[FAIL]${NC} 문제 2 (합계 및 역순): 컴파일 실패. 코드를 확인하세요."
+          fi
+
+          # ----------------------------------------------------
+          # 4. 최종 점수 및 피드백 계산
+          # ----------------------------------------------------
+          FINAL_SCORE=$((P1_SCORE + P2_SCORE))
+          
+          # 최종 피드백 구성 (헤더 + P1 결과 + P2 결과)
+          FULL_FEEDBACK="--- 최종 채점 결과 (총 ${FINAL_SCORE}점 / 100점) ---\n"
+          FULL_FEEDBACK="${FULL_FEEDBACK}\n${P1_FEEDBACK}"
+          FULL_FEEDBACK="${FULL_FEEDBACK}\n${P2_FEEDBACK}"
+          
+          # 5. GitHub Classroom 출력 (점수 및 피드백 전달)
+          echo "점수: ${FINAL_SCORE} / 100"
+          echo "피드백:\n"
+          echo -e "$FULL_FEEDBACK" # FULL_FEEDBACK 변수에 저장된 ANSI 코드를 해석하여 출력
+
+          echo "score=$FINAL_SCORE" >> "$GITHUB_OUTPUT"
+          echo "feedback<<EOF" >> "$GITHUB_OUTPUT"
+          echo -e "$FULL_FEEDBACK" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          # 6. 최종 실패 보장 로직
+          if [ $FINAL_SCORE -ne 100 ]; then
+            echo "::error::[ERROR] 최종 점수가 100점이 아니므로 채점 실패 처리합니다."
+            exit 1
+          fi
