@@ -92,8 +92,8 @@ jobs:
               P2_FEEDBACK="${RED}[FAIL]${NC} 문제 2 (파일 비트 조작): 결과 파일(result.txt)이 생성되지 않았습니다."
             else
               # 3-5. result.txt에서 16진수 3개만 추출하여 비교
-              #      기대 값: 0x17dc 0x4af1 0x503f
-              EXPECTED_HEX="0x17dc 0x4af1 0x503f"
+              #      기대 값: 0x27dc 0x1bf1 0x207f
+              EXPECTED_HEX="0x27dc 0x1bf1 0x207f"
 
               # result.txt에서 '0x'로 시작하는 토큰을 3개 추출
               ACTUAL_HEX=$(grep -o '0x[0-9a-fA-F]\+' result.txt | head -n 3 | tr '\n' ' ')
