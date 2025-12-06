@@ -1,1 +1,1 @@
-C programming Midterm Test Repo
+C programming Endterm Test Repo
