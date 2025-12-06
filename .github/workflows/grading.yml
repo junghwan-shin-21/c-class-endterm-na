@@ -82,7 +82,7 @@ jobs:
 
             # 3-2. 입력 파일(source.txt) 생성
             #      학생 코드는 이 파일에서 3개의 값을 읽어야 함
-            printf "0x27dc 0x5af1 0x603f\n" > source.txt
+            printf "0x234A 0x655D 0x0AEE\n" > source.txt
 
             # 3-3. 프로그램 실행 (result.txt 생성 기대)
             ./main2 > actual_p2_raw.txt 2> runtime_error_p2.txt
