@@ -53,7 +53,7 @@ int main(void) {
     if (fout == NULL) {
         perror("result.txt");
         return 1;
-    }
+    } 
 
     p = &a;
     fprintf(fout, "Bit setting 결과: 0x%04x ", *p);
